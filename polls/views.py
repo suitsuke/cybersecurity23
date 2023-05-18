@@ -1,28 +1,38 @@
 from django.views.decorators.csrf import csrf_exempt
-
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
 from django.views import generic
 
 from .models import Choice, Question
 
+def logout_view(request):
+    logout(request)
+    return HttpResponseRedirect('/polls/')
 
-#class IndexView(generic.ListView):
-#    template_name = "polls/index.html"
-#    context_object_name = "latest_question_list"
+def custom_login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('polls:index')
+        else:
+            return render(request, 'polls/login.html', {'error_message': 'Invalid username or password.'})
+    else:
+        return render(request, 'polls/login.html')
 
-#    def get_queryset(self):
-#        """Return the last five published questions."""
-#        return Question.objects.order_by("-pub_date")[:5]
-
+@login_required
 def index(request):
     latest_question_list = Question.objects.order_by("-pub_date")[:5]
     context = {"latest_question_list": latest_question_list}
     return render(request, "polls/index.html", context)
 
 def admin(request):
-    return
+    return render(request, )
 
 class DetailView(generic.DetailView):
     model = Question

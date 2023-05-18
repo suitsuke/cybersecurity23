@@ -8,7 +8,16 @@
   </head>
 
   <body>
-    
+    {% if user.is_authenticated %}
+      <p>Welcome, {{ user.username }}!</p>
+        <a href="{% url 'polls:logout' %}">Logout</a>
+
+      </form>
+    {% else %}
+      <p>You are not logged in.</p>
+      <a href="{% url 'login' %}">Login</a>
+    {% endif %}
+
 
     {% if latest_question_list %}
     <ul>
