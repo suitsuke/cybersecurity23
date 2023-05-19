@@ -6,6 +6,9 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
 from django.views import generic
 
+#unsafe imports
+import sqlite3
+
 from .models import Choice, Question
 
 def logout_view(request):
@@ -27,9 +30,49 @@ def custom_login(request):
 
 @login_required
 def index(request):
-    latest_question_list = Question.objects.order_by("-pub_date")[:5]
-    context = {"latest_question_list": latest_question_list}
-    return render(request, "polls/index.html", context)
+    
+    
+
+    search_query = request.GET.get('search')
+    latest_question_list = []
+    #this is what is written in the search text window
+    
+    if search_query:
+        conn = sqlite3.connect('db.sqlite3')
+        cursor = conn.cursor()
+        #insertion = alla oleva
+        cursor.execute("SELECT id, question_text FROM polls_question WHERE question_text LIKE '%" + search_query + "%'").fetchall()
+        rows = cursor.fetchall()
+        for row in rows:
+            question_id = row[0]
+            question_text = row[1]
+            question = Question(id=question_id, question_text=question_text)
+            latest_question_list.append(question)
+
+        conn.close()
+    else:
+        latest_question_list = Question.objects.order_by('-pub_date')[:5]
+
+
+    
+    #######        a safer way to search questions     ########
+    
+    #if search_query:
+    #    latest_question_list = Question.objects.filter(question_text__icontains=search_query)
+    #else:
+    #    latest_question_list = Question.objects.all()
+    
+    ######              end      ####### 
+
+    if not search_query:
+        latest_question_list = Question.objects.all()
+
+    context = {'latest_question_list': latest_question_list, 'search': search_query}
+    
+
+    return render(request, 'polls/index.html', context) 
+
+    
 
 def admin(request):
     return render(request, )
